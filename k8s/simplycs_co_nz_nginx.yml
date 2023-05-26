@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: simplycs-co-nz-nginx
+  namespace: default
+spec:
+  selector:
+    matchLabels:
+      app: simplycs-co-nz-nginx
+  template:
+    metadata:
+      labels:
+        app: simplycs-co-nz-nginx
+    spec:
+      volumes:
+        - name: app-cache
+          emptyDir:
+            sizeLimit: 250Mi   
+      initContainers:
+        - name: simplycs-co-nz-nginx-git
+          image: alpine:latest
+          command: ['/bin/sh', '-c']
+          args: ['apk add git && git clone https://github.com/zaita/simplycs.co.nz /cache/']
+          volumeMounts:
+            - mountPath: /cache
+              name: app-cache
+      containers:
+        - name: simplycs-co-nz-nginx
+          image: nginx:stable
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 80
+              name: web
+              protocol: TCP
+          volumeMounts:
+            - mountPath: /usr/share/nginx/html
+              name: app-cache            
